@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>按揭計算機</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", "Heiti TC", sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .calculator-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 400px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-weight: bold;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box; /* Ensures padding doesn't affect width */
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .result-item {
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 16px;
+        }
+        .result-value {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator-container">
+    <h1>按揭計算機</h1>
+
+    <div class="input-group">
+        <label for="price">房產價格 (HKD)</label>
+        <input type="number" id="price" placeholder="例如: 6000000">
+    </div>
+
+    <div class="input-group">
+        <label for="rate">年利率 (%)</label>
+        <input type="number" id="rate" step="0.01" placeholder="例如: 4.125">
+    </div>
+
+    <div class="input-group">
+        <label for="years">按揭年期 (年)</label>
+        <input type="number" id="years" placeholder="例如: 30">
+    </div>
+
+    <div class="input-group">
+        <label for="income">每月收入 (HKD)</label>
+        <input type="number" id="income" placeholder="例如: 50000">
+    </div>
+
+    <button onclick="calculateMortgage()">計算</button>
+
+    <div id="error-msg" class="error">請輸入所有欄位且數值必須大於 0</div>
+
+    <div class="results" id="results" style="display: none;">
+        <div class="result-item">
+            <span>每月供款:</span>
+            <span class="result-value" id="monthly-repayment"></span>
+        </div>
+        <div class="result-item">
+            <span>供款與入息比率 (DTI):</span>
+            <span class="result-value" id="dti-ratio"></span>
+        </div>
+    </div>
+</div>
+
+<script>
+    function calculateMortgage() {
+        // 獲取輸入值
+        const price = parseFloat(document.getElementById('price').value);
+        const rate = parseFloat(document.getElementById('rate').value);
+        const years = parseFloat(document.getElementById('years').value);
+        const income = parseFloat(document.getElementById('income').value);
+        const errorMsg = document.getElementById('error-msg');
+        const resultsDiv = document.getElementById('results');
+
+        // 驗證輸入
+        if (!price || !rate || !years || !income || price <= 0 || rate <= 0 || years <= 0 || income <= 0) {
+            errorMsg.style.display = 'block';
+            resultsDiv.style.display = 'none';
+            return;
+        }
+
+        errorMsg.style.display = 'none';
+
+        // 計算邏輯
+        // 每月利率
+        const monthlyRate = rate / 100 / 12;
+        // 總期數 (月)
+        const totalMonths = years * 12;
+
+        // 每月供款計算公式: M = P * (r * (1+r)^n) / ((1+r)^n - 1)
+        let monthlyRepayment = 0;
+        
+        if (monthlyRate === 0) {
+            monthlyRepayment = price / totalMonths;
+        } else {
+            monthlyRepayment = price * (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / (Math.pow(1 + monthlyRate, totalMonths) - 1);
+        }
+
+        // 供款與入息比率
+        const dtiRatio = (monthlyRepayment / income) * 100;
+
+        // 顯示結果 (四捨五入至小數點後兩位)
+        document.getElementById('monthly-repayment').innerText = '$' + monthlyRepayment.toFixed(2);
+        document.getElementById('dti-ratio').innerText = dtiRatio.toFixed(2) + '%';
+        
+        resultsDiv.style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
