@@ -19,7 +19,10 @@
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            width: 400px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         h1 {
             text-align: center;
@@ -72,11 +75,133 @@
             font-weight: bold;
             color: #007bff;
         }
+        .result-value.warning {
+            color: red;
+            font-weight: bold;
+        }
         .error {
             color: red;
             text-align: center;
             margin-top: 10px;
             display: none;
+        }
+        .stress-test-section {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff3cd;
+            border-radius: 5px;
+            border: 2px solid #ffc107;
+        }
+        .stress-test-section h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #856404;
+            font-size: 16px;
+        }
+        .investment-section {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #d4edda;
+            border-radius: 5px;
+            border: 2px solid #28a745;
+        }
+        .investment-section h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #155724;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .investment-section h3:hover {
+            color: #0d4216;
+        }
+        .investment-toggle {
+            font-size: 14px;
+            font-weight: normal;
+        }
+        .investment-content {
+            display: none;
+        }
+        .investment-content.expanded {
+            display: block;
+        }
+        .payment-schedule {
+            margin-top: 20px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        .payment-schedule h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .payment-schedule h3:hover {
+            color: #007bff;
+        }
+        .schedule-toggle {
+            font-size: 14px;
+            font-weight: normal;
+        }
+        .schedule-content {
+            display: none;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .schedule-content.expanded {
+            display: block;
+        }
+        .input-section {
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out, margin 0.3s ease-out;
+            overflow: hidden;
+            max-height: 2000px;
+        }
+        .input-section.collapsed {
+            max-height: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
+        }
+        .input-section-header {
+            cursor: pointer;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .input-section-header:hover {
+            background-color: #e9ecef;
+        }
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .schedule-table th {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+        }
+        .schedule-table td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .schedule-table tr:hover {
+            background-color: #f5f5f5;
         }
     </style>
 </head>
@@ -85,38 +210,214 @@
 <div class="calculator-container">
     <h1>按揭計算機</h1>
 
+    <div class="input-section-header" onclick="toggleInputSection()" id="input-section-header">
+        <span>輸入資料</span>
+        <span id="input-section-toggle">▲ 收起</span>
+    </div>
+
+    <div class="input-section" id="input-section">
     <div class="input-group">
-        <label for="price">房產價格 (HKD)</label>
-        <input type="number" id="price" placeholder="例如: 6000000">
+        <label for="price">物業價格 (萬 HKD)</label>
+        <input type="number" id="price" placeholder="例如: 600">
     </div>
 
     <div class="input-group">
-        <label for="rate">年利率 (%)</label>
+        <label for="downPayment">首期 (萬 HKD)</label>
+        <input type="number" id="downPayment" placeholder="例如: 120">
+    </div>
+
+    <div class="input-group">
+        <label for="rate">息率 (%)</label>
         <input type="number" id="rate" step="0.01" placeholder="例如: 4.125">
     </div>
 
     <div class="input-group">
-        <label for="years">按揭年期 (年)</label>
+        <label for="years">還款年期 (年)</label>
         <input type="number" id="years" placeholder="例如: 30">
     </div>
 
     <div class="input-group">
-        <label for="income">每月收入 (HKD)</label>
+        <label for="income">入息 (HKD)</label>
         <input type="number" id="income" placeholder="例如: 50000">
     </div>
 
-    <button onclick="calculateMortgage()">計算</button>
+    <div class="input-group">
+        <label for="stressRate">壓力測試 - 增加利率 (%)</label>
+        <input type="number" id="stressRate" step="0.01" placeholder="例如: 2.0" value="0">
+    </div>
 
-    <div id="error-msg" class="error">請輸入所有欄位且數值必須大於 0</div>
+    <div class="input-group">
+        <label for="initialRent">初始每月租金 (HKD)</label>
+        <input type="number" id="initialRent" placeholder="例如: 20000">
+    </div>
+
+    <div class="input-group">
+        <label for="monthlyManagementFee">每月管理費 (HKD)</label>
+        <input type="number" id="monthlyManagementFee" placeholder="例如: 2000">
+    </div>
+
+    <div class="input-group">
+        <label for="quarterlyRates">每3個月差餉 (HKD)</label>
+        <input type="number" id="quarterlyRates" placeholder="例如: 3000">
+    </div>
+
+    <button onclick="calculateMortgage()">計算</button>
+    
+    <div style="margin-top: 15px; display: flex; gap: 10px;">
+        <button onclick="saveRecord()" style="width: 48%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;">保存記錄</button>
+        <button onclick="showRecords()" style="width: 48%; padding: 10px; background-color: #17a2b8; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;">導入記錄</button>
+    </div>
+    </div>
+
+    <div id="error-msg" class="error">請輸入所有欄位且數值必須大於 0，且首期必須小於物業價格</div>
+    
+    <div id="records-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background-color: white; padding: 20px; border-radius: 10px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <h3 style="margin-top: 0;">選擇記錄</h3>
+            <div id="records-list"></div>
+            <button onclick="closeRecordsModal()" style="margin-top: 15px; width: 100%; padding: 10px; background-color: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">關閉</button>
+        </div>
+    </div>
 
     <div class="results" id="results" style="display: none;">
+        <div class="stress-test-section">
+            <h3>壓力測試結果</h3>
+            <div class="result-item">
+                <span>壓力測試後每月供款:</span>
+                <span class="result-value" id="stress-monthly-repayment"></span>
+            </div>
+            <div class="result-item">
+                <span>壓力測試後供款佔入息比:</span>
+                <span class="result-value" id="stress-dti-ratio"></span>
+            </div>
+        </div>
+        
         <div class="result-item">
-            <span>每月供款:</span>
-            <span class="result-value" id="monthly-repayment"></span>
+            <span>全期總利息支出:</span>
+            <span class="result-value" style="color: red;" id="total-interest"></span>
         </div>
         <div class="result-item">
-            <span>供款與入息比率 (DTI):</span>
-            <span class="result-value" id="dti-ratio"></span>
+            <span>平均每期利息支出:</span>
+            <span class="result-value" style="color: red;" id="avg-interest"></span>
+        </div>
+        <div class="result-item">
+            <span>管理費及差餉總支出:</span>
+            <span class="result-value" style="color: red;" id="total-management-rates"></span>
+        </div>
+        <div class="result-item">
+            <span>預期還款年期後樓價:</span>
+            <span class="result-value" style="color: #007bff;" id="expected-property-value"></span>
+        </div>
+        <div class="result-item">
+            <span>淨資產:</span>
+            <span class="result-value" style="color: #28a745;" id="net-assets"></span>
+        </div>
+        
+        <div class="payment-schedule">
+            <h3 onclick="toggleSchedule()">
+                <span>每期供款明細</span>
+                <span class="schedule-toggle" id="schedule-toggle">▼ 展開</span>
+            </h3>
+            <div class="schedule-content" id="schedule-content">
+                <table class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th>期數</th>
+                            <th>供本金 (HKD)</th>
+                            <th>供利息 (HKD)</th>
+                            <th>剩餘本金 (HKD)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedule-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="payment-schedule" id="management-rates-schedule-container" style="display: none;">
+            <h3 onclick="toggleManagementRatesSchedule()">
+                <span>每期管理費及差餉支出明細</span>
+                <span class="schedule-toggle" id="management-rates-schedule-toggle">▼ 展開</span>
+            </h3>
+            <div class="schedule-content" id="management-rates-schedule-content">
+                <table class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th>期數</th>
+                            <th>管理費 (HKD)</th>
+                            <th>差餉 (HKD)</th>
+                            <th>當期總計 (HKD)</th>
+                            <th>累積總支出 (HKD)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="management-rates-schedule-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="investment-section">
+            <h3 onclick="toggleInvestment()">
+                <span>投資收益計算</span>
+                <span class="investment-toggle" id="investment-toggle">▼ 展開</span>
+            </h3>
+            <div class="investment-content" id="investment-content">
+                <div class="result-item">
+                    <span>首期投資收益:</span>
+                    <span class="result-value" id="downpayment-return"></span>
+                </div>
+                <div class="result-item">
+                    <span>每月供款投資收益:</span>
+                    <span class="result-value" id="monthly-return"></span>
+                </div>
+                <div class="result-item">
+                    <span>還款年期後總收益:</span>
+                    <span class="result-value" id="total-return"></span>
+                </div>
+                <div class="result-item">
+                    <span>預計租金總支出:</span>
+                    <span class="result-value" style="color: red;" id="total-rent"></span>
+                </div>
+                <div class="result-item">
+                    <span>淨資產:</span>
+                    <span class="result-value" style="color: #28a745;" id="investment-net-assets"></span>
+                </div>
+                
+                <div class="payment-schedule" style="margin-top: 15px;">
+                    <h3 style="font-size: 14px; margin-bottom: 10px;">每期投資收益明細</h3>
+                    <div class="schedule-content" style="display: block;">
+                        <table class="schedule-table">
+                            <thead>
+                                <tr>
+                                    <th>期數</th>
+                                    <th>首期投資累積收益 (HKD)</th>
+                                    <th>每月供款累積收益 (HKD)</th>
+                                    <th>總收益 (HKD)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="investment-schedule-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="payment-schedule" style="margin-top: 15px; display: none;" id="rent-schedule-container">
+                    <h3 style="font-size: 14px; margin-bottom: 10px;">每期租金支出明細</h3>
+                    <div class="schedule-content" style="display: block;">
+                        <table class="schedule-table">
+                            <thead>
+                                <tr>
+                                    <th>期數</th>
+                                    <th>當期租金 (HKD)</th>
+                                    <th>累積租金支出 (HKD)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rent-schedule-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -124,21 +425,35 @@
 <script>
     function calculateMortgage() {
         // 獲取輸入值
-        const price = parseFloat(document.getElementById('price').value);
+        const priceInWan = parseFloat(document.getElementById('price').value);
+        const downPaymentInWan = parseFloat(document.getElementById('downPayment').value);
         const rate = parseFloat(document.getElementById('rate').value);
         const years = parseFloat(document.getElementById('years').value);
         const income = parseFloat(document.getElementById('income').value);
+        const stressRate = parseFloat(document.getElementById('stressRate').value) || 0;
+        const initialRent = parseFloat(document.getElementById('initialRent').value) || 0;
+        const monthlyManagementFee = parseFloat(document.getElementById('monthlyManagementFee').value) || 0;
+        const quarterlyRates = parseFloat(document.getElementById('quarterlyRates').value) || 0;
         const errorMsg = document.getElementById('error-msg');
         const resultsDiv = document.getElementById('results');
 
         // 驗證輸入
-        if (!price || !rate || !years || !income || price <= 0 || rate <= 0 || years <= 0 || income <= 0) {
+        if (!priceInWan || !downPaymentInWan || !rate || !years || !income || 
+            priceInWan <= 0 || downPaymentInWan < 0 || rate <= 0 || years <= 0 || income <= 0 || 
+            stressRate < 0 || downPaymentInWan >= priceInWan || initialRent < 0) {
             errorMsg.style.display = 'block';
             resultsDiv.style.display = 'none';
             return;
         }
 
         errorMsg.style.display = 'none';
+
+        // 將房產價格和首期從「萬」轉換為實際金額（乘以10000）
+        const price = priceInWan * 10000;
+        const downPayment = downPaymentInWan * 10000;
+        
+        // 計算貸款金額
+        const loanAmount = price - downPayment;
 
         // 計算邏輯
         // 每月利率
@@ -150,19 +465,465 @@
         let monthlyRepayment = 0;
         
         if (monthlyRate === 0) {
-            monthlyRepayment = price / totalMonths;
+            monthlyRepayment = loanAmount / totalMonths;
         } else {
-            monthlyRepayment = price * (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / (Math.pow(1 + monthlyRate, totalMonths) - 1);
+            monthlyRepayment = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / (Math.pow(1 + monthlyRate, totalMonths) - 1);
         }
 
-        // 供款與入息比率
+        // 供款佔入息比率
         const dtiRatio = (monthlyRepayment / income) * 100;
 
-        // 顯示結果 (四捨五入至小數點後兩位)
-        document.getElementById('monthly-repayment').innerText = '$' + monthlyRepayment.toFixed(2);
-        document.getElementById('dti-ratio').innerText = dtiRatio.toFixed(2) + '%';
+        // 計算每一期的本金和利息，並計算全期總利息
+        let remainingPrincipal = loanAmount;
+        let totalInterest = 0;
+        const scheduleBody = document.getElementById('schedule-body');
+        scheduleBody.innerHTML = '';
+
+        for (let month = 1; month <= totalMonths; month++) {
+            // 計算當期利息
+            const interestPayment = remainingPrincipal * monthlyRate;
+            // 計算當期本金
+            const principalPayment = monthlyRepayment - interestPayment;
+            // 更新剩餘本金
+            remainingPrincipal = remainingPrincipal - principalPayment;
+            // 累加總利息
+            totalInterest += interestPayment;
+
+            // 創建表格行
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${month}</td>
+                <td>$${principalPayment.toFixed(2)}</td>
+                <td>$${interestPayment.toFixed(2)}</td>
+                <td>$${Math.max(0, remainingPrincipal).toFixed(2)}</td>
+            `;
+            scheduleBody.appendChild(row);
+        }
+        
+        // 顯示全期總利息支出
+        document.getElementById('total-interest').innerText = '$' + totalInterest.toFixed(2);
+        
+        // 計算並顯示平均每期利息支出（全期總利息支出除期數）
+        const avgInterestPerMonth = totalInterest / totalMonths;
+        document.getElementById('avg-interest').innerText = '$' + avgInterestPerMonth.toFixed(2);
+        
+        // 壓力測試計算
+        const stressTestRate = rate + stressRate;
+        const stressMonthlyRate = stressTestRate / 100 / 12;
+        
+        let stressMonthlyRepayment = 0;
+        if (stressMonthlyRate === 0) {
+            stressMonthlyRepayment = loanAmount / totalMonths;
+        } else {
+            stressMonthlyRepayment = loanAmount * (stressMonthlyRate * Math.pow(1 + stressMonthlyRate, totalMonths)) / (Math.pow(1 + stressMonthlyRate, totalMonths) - 1);
+        }
+        
+        const stressDtiRatio = (stressMonthlyRepayment / income) * 100;
+        
+        // 顯示壓力測試結果
+        const stressMonthlyRepaymentEl = document.getElementById('stress-monthly-repayment');
+        const stressDtiRatioEl = document.getElementById('stress-dti-ratio');
+        
+        stressMonthlyRepaymentEl.innerText = '$' + stressMonthlyRepayment.toFixed(2);
+        stressDtiRatioEl.innerText = stressDtiRatio.toFixed(2) + '%';
+        
+        // 如果超過50%，顯示為紅色
+        if (stressDtiRatio > 50) {
+            stressDtiRatioEl.classList.add('warning');
+        } else {
+            stressDtiRatioEl.classList.remove('warning');
+        }
+        
+        // 投資收益計算（使用年利率，按月複利計算）
+        // 年利率轉換為月利率（與按揭計算一致）
+        const annualRate = rate / 100;
+        const monthlyRateForInvestment = annualRate / 12;
+        
+        // 首期投資的複利收益：首期 * (1 + 月利率)^總月數
+        let downPaymentReturn = 0;
+        if (monthlyRateForInvestment === 0) {
+            downPaymentReturn = downPayment;
+        } else {
+            downPaymentReturn = downPayment * Math.pow(1 + monthlyRateForInvestment, totalMonths);
+        }
+        
+        // 每月供款的年金終值：每月供款 * ((1 + 月利率)^總月數 - 1) / 月利率
+        let monthlyReturn = 0;
+        if (monthlyRateForInvestment === 0) {
+            monthlyReturn = monthlyRepayment * totalMonths;
+        } else {
+            monthlyReturn = monthlyRepayment * (Math.pow(1 + monthlyRateForInvestment, totalMonths) - 1) / monthlyRateForInvestment;
+        }
+        
+        // 總收益 = 首期投資收益 + 每月供款投資收益
+        const totalReturn = downPaymentReturn + monthlyReturn;
+        
+        // 顯示投資收益結果
+        document.getElementById('downpayment-return').innerText = '$' + downPaymentReturn.toFixed(2);
+        document.getElementById('monthly-return').innerText = '$' + monthlyReturn.toFixed(2);
+        document.getElementById('total-return').innerText = '$' + totalReturn.toFixed(2);
+        
+        // 計算租金總支出（租金每兩年按年利率增加一次）
+        let totalRent = 0;
+        if (initialRent > 0) {
+            const annualRate = rate / 100;
+            const monthsPerPeriod = 24; // 每兩年 = 24個月
+            const numberOfPeriods = Math.floor(totalMonths / monthsPerPeriod);
+            const remainingMonths = totalMonths % monthsPerPeriod;
+            
+            // 計算每個兩年期間的租金總和
+            for (let period = 0; period < numberOfPeriods; period++) {
+                const currentRent = initialRent * Math.pow(1 + annualRate, period);
+                totalRent += currentRent * monthsPerPeriod;
+            }
+            
+            // 計算剩餘月份的租金
+            if (remainingMonths > 0) {
+                const currentRent = initialRent * Math.pow(1 + annualRate, numberOfPeriods);
+                totalRent += currentRent * remainingMonths;
+            }
+        }
+        
+        // 顯示租金總支出
+        document.getElementById('total-rent').innerText = '$' + totalRent.toFixed(2);
+        
+        // 計算投資收益的淨資產（還款年期後總收益 - 預計租金總支出）
+        const investmentNetAssets = totalReturn - totalRent;
+        document.getElementById('investment-net-assets').innerText = '$' + investmentNetAssets.toFixed(2);
+        
+        // 計算並顯示每期租金支出明細
+        const rentScheduleBody = document.getElementById('rent-schedule-body');
+        const rentScheduleContainer = document.getElementById('rent-schedule-container');
+        rentScheduleBody.innerHTML = '';
+        
+        if (initialRent > 0) {
+            rentScheduleContainer.style.display = 'block';
+            const annualRate = rate / 100;
+            const monthsPerPeriod = 24; // 每兩年 = 24個月
+            let cumulativeRent = 0;
+            
+            for (let month = 1; month <= totalMonths; month++) {
+                // 計算當前月份屬於第幾個兩年週期
+                const period = Math.floor((month - 1) / monthsPerPeriod);
+                // 計算當期租金（每兩年按年利率增加一次）
+                const currentRent = initialRent * Math.pow(1 + annualRate, period);
+                cumulativeRent += currentRent;
+                
+                // 創建表格行
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${month}</td>
+                    <td>$${currentRent.toFixed(2)}</td>
+                    <td>$${cumulativeRent.toFixed(2)}</td>
+                `;
+                rentScheduleBody.appendChild(row);
+            }
+        } else {
+            rentScheduleContainer.style.display = 'none';
+        }
+        
+        // 計算管理費和差餉總支出（每年按年利率增加一次）
+        let totalManagementRates = 0;
+        if (monthlyManagementFee > 0 || quarterlyRates > 0) {
+            const annualRate = rate / 100;
+            const monthsPerYear = 12;
+            const numberOfYears = Math.floor(totalMonths / monthsPerYear);
+            const remainingMonths = totalMonths % monthsPerYear;
+            
+            // 計算管理費（每月支付，每年增加）
+            let totalManagementFee = 0;
+            if (monthlyManagementFee > 0) {
+                for (let year = 0; year < numberOfYears; year++) {
+                    const currentFee = monthlyManagementFee * Math.pow(1 + annualRate, year);
+                    totalManagementFee += currentFee * monthsPerYear;
+                }
+                // 計算剩餘月份的管理費
+                if (remainingMonths > 0) {
+                    const currentFee = monthlyManagementFee * Math.pow(1 + annualRate, numberOfYears);
+                    totalManagementFee += currentFee * remainingMonths;
+                }
+            }
+            
+            // 計算差餉（每3個月支付一次，每年增加）
+            let totalRates = 0;
+            if (quarterlyRates > 0) {
+                const quartersPerYear = 4;
+                const totalQuarters = Math.floor(totalMonths / 3);
+                const quartersInFullYears = numberOfYears * quartersPerYear;
+                const remainingQuarters = totalQuarters - quartersInFullYears;
+                
+                // 計算完整年份的差餉
+                for (let year = 0; year < numberOfYears; year++) {
+                    const currentRates = quarterlyRates * Math.pow(1 + annualRate, year);
+                    totalRates += currentRates * quartersPerYear;
+                }
+                // 計算剩餘季度的差餉
+                if (remainingQuarters > 0) {
+                    const currentRates = quarterlyRates * Math.pow(1 + annualRate, numberOfYears);
+                    totalRates += currentRates * remainingQuarters;
+                }
+            }
+            
+            totalManagementRates = totalManagementFee + totalRates;
+        }
+        
+        // 顯示管理費和差餉總支出
+        document.getElementById('total-management-rates').innerText = '$' + totalManagementRates.toFixed(2);
+        
+        // 計算預期還款年期後樓價（按年利率增長）
+        const annualRateForProperty = rate / 100;
+        const expectedPropertyValue = price * Math.pow(1 + annualRateForProperty, years);
+        document.getElementById('expected-property-value').innerText = '$' + expectedPropertyValue.toFixed(2);
+        
+        // 計算淨資產（預期還款年期後樓價 - 管理費及差餉總支出 - 全期總利息支出）
+        const netAssets = expectedPropertyValue - totalManagementRates - totalInterest;
+        document.getElementById('net-assets').innerText = '$' + netAssets.toFixed(2);
+        
+        // 計算並顯示每期管理費和差餉支出明細
+        const managementRatesScheduleBody = document.getElementById('management-rates-schedule-body');
+        const managementRatesScheduleContainer = document.getElementById('management-rates-schedule-container');
+        
+        if (managementRatesScheduleBody && managementRatesScheduleContainer) {
+            managementRatesScheduleBody.innerHTML = '';
+            
+            if (monthlyManagementFee > 0 || quarterlyRates > 0) {
+                // 顯示表格容器
+                managementRatesScheduleContainer.style.display = 'block';
+                const annualRate = rate / 100;
+                let cumulativeManagementRates = 0;
+                
+                for (let month = 1; month <= totalMonths; month++) {
+                    // 計算當前月份屬於第幾年
+                    const year = Math.floor((month - 1) / 12);
+                    
+                    // 計算當期管理費（每月支付，每年增加）
+                    const currentManagementFee = monthlyManagementFee > 0 ? 
+                        monthlyManagementFee * Math.pow(1 + annualRate, year) : 0;
+                    
+                    // 計算當期差餉（每3個月支付一次，每年增加）
+                    let currentRates = 0;
+                    if (quarterlyRates > 0 && (month % 3 === 0)) {
+                        const quarterYear = Math.floor((month - 1) / 12);
+                        currentRates = quarterlyRates * Math.pow(1 + annualRate, quarterYear);
+                    }
+                    
+                    const monthlyTotal = currentManagementFee + currentRates;
+                    cumulativeManagementRates += monthlyTotal;
+                    
+                    // 創建表格行
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${month}</td>
+                        <td>$${currentManagementFee.toFixed(2)}</td>
+                        <td>$${currentRates.toFixed(2)}</td>
+                        <td>$${monthlyTotal.toFixed(2)}</td>
+                        <td>$${cumulativeManagementRates.toFixed(2)}</td>
+                    `;
+                    managementRatesScheduleBody.appendChild(row);
+                }
+            } else {
+                // 隱藏表格容器
+                managementRatesScheduleContainer.style.display = 'none';
+            }
+        }
+        
+        // 計算並顯示每期投資收益明細
+        const investmentScheduleBody = document.getElementById('investment-schedule-body');
+        investmentScheduleBody.innerHTML = '';
+        
+        for (let month = 1; month <= totalMonths; month++) {
+            // 首期投資在該期的累積收益
+            let downPaymentReturnAtMonth = 0;
+            if (monthlyRateForInvestment === 0) {
+                downPaymentReturnAtMonth = downPayment;
+            } else {
+                downPaymentReturnAtMonth = downPayment * Math.pow(1 + monthlyRateForInvestment, month);
+            }
+            
+            // 每月供款投資在該期的累積收益（年金終值）
+            let monthlyReturnAtMonth = 0;
+            if (monthlyRateForInvestment === 0) {
+                monthlyReturnAtMonth = monthlyRepayment * month;
+            } else {
+                monthlyReturnAtMonth = monthlyRepayment * (Math.pow(1 + monthlyRateForInvestment, month) - 1) / monthlyRateForInvestment;
+            }
+            
+            // 該期總收益
+            const totalReturnAtMonth = downPaymentReturnAtMonth + monthlyReturnAtMonth;
+            
+            // 創建表格行
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${month}</td>
+                <td>$${downPaymentReturnAtMonth.toFixed(2)}</td>
+                <td>$${monthlyReturnAtMonth.toFixed(2)}</td>
+                <td>$${totalReturnAtMonth.toFixed(2)}</td>
+            `;
+            investmentScheduleBody.appendChild(row);
+        }
         
         resultsDiv.style.display = 'block';
+        
+        // 自動收起輸入區域
+        collapseInputSection();
+    }
+    
+    function toggleInputSection() {
+        const section = document.getElementById('input-section');
+        const toggle = document.getElementById('input-section-toggle');
+        
+        if (section.classList.contains('collapsed')) {
+            section.classList.remove('collapsed');
+            toggle.innerText = '▲ 收起';
+        } else {
+            section.classList.add('collapsed');
+            toggle.innerText = '▼ 展開';
+        }
+    }
+    
+    function collapseInputSection() {
+        const section = document.getElementById('input-section');
+        const toggle = document.getElementById('input-section-toggle');
+        if (section && toggle) {
+            section.classList.add('collapsed');
+            toggle.innerText = '▼ 展開';
+        }
+    }
+    
+    function toggleSchedule() {
+        const content = document.getElementById('schedule-content');
+        const toggle = document.getElementById('schedule-toggle');
+        
+        if (content.classList.contains('expanded')) {
+            content.classList.remove('expanded');
+            toggle.innerText = '▼ 展開';
+        } else {
+            content.classList.add('expanded');
+            toggle.innerText = '▲ 收起';
+        }
+    }
+    
+    function toggleManagementRatesSchedule() {
+        const content = document.getElementById('management-rates-schedule-content');
+        const toggle = document.getElementById('management-rates-schedule-toggle');
+        
+        if (content.classList.contains('expanded')) {
+            content.classList.remove('expanded');
+            toggle.innerText = '▼ 展開';
+        } else {
+            content.classList.add('expanded');
+            toggle.innerText = '▲ 收起';
+        }
+    }
+    
+    function toggleInvestment() {
+        const content = document.getElementById('investment-content');
+        const toggle = document.getElementById('investment-toggle');
+        
+        if (content.classList.contains('expanded')) {
+            content.classList.remove('expanded');
+            toggle.innerText = '▼ 展開';
+        } else {
+            content.classList.add('expanded');
+            toggle.innerText = '▲ 收起';
+        }
+    }
+    
+    // 記錄功能
+    function saveRecord() {
+        const price = document.getElementById('price').value;
+        const downPayment = document.getElementById('downPayment').value;
+        const rate = document.getElementById('rate').value;
+        const years = document.getElementById('years').value;
+        const income = document.getElementById('income').value;
+        const stressRate = document.getElementById('stressRate').value;
+        const initialRent = document.getElementById('initialRent').value;
+        const monthlyManagementFee = document.getElementById('monthlyManagementFee').value;
+        const quarterlyRates = document.getElementById('quarterlyRates').value;
+        
+        // 檢查是否有輸入
+        if (!price || !downPayment || !rate || !years || !income) {
+            alert('請先輸入基本資料再保存');
+            return;
+        }
+        
+        const record = {
+            price: price,
+            downPayment: downPayment,
+            rate: rate,
+            years: years,
+            income: income,
+            stressRate: stressRate || '0',
+            initialRent: initialRent || '',
+            monthlyManagementFee: monthlyManagementFee || '',
+            quarterlyRates: quarterlyRates || '',
+            timestamp: new Date().toLocaleString('zh-Hant')
+        };
+        
+        // 從 localStorage 獲取現有記錄
+        let records = JSON.parse(localStorage.getItem('mortgageRecords') || '[]');
+        
+        // 添加新記錄
+        records.push(record);
+        
+        // 保存到 localStorage（最多保存20條記錄）
+        if (records.length > 20) {
+            records = records.slice(-20);
+        }
+        
+        localStorage.setItem('mortgageRecords', JSON.stringify(records));
+        
+        alert('記錄已保存！');
+    }
+    
+    function showRecords() {
+        const records = JSON.parse(localStorage.getItem('mortgageRecords') || '[]');
+        const recordsList = document.getElementById('records-list');
+        const modal = document.getElementById('records-modal');
+        
+        if (records.length === 0) {
+            recordsList.innerHTML = '<p>暫無保存的記錄</p>';
+        } else {
+            recordsList.innerHTML = '';
+            records.reverse().forEach((record, index) => {
+                const recordDiv = document.createElement('div');
+                recordDiv.style.cssText = 'padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer;';
+                recordDiv.onmouseover = function() { this.style.backgroundColor = '#f5f5f5'; };
+                recordDiv.onmouseout = function() { this.style.backgroundColor = 'white'; };
+                recordDiv.onclick = function() { loadRecord(record); };
+                
+                recordDiv.innerHTML = `
+                    <div style="font-weight: bold; margin-bottom: 5px;">記錄 ${records.length - index} - ${record.timestamp}</div>
+                    <div style="font-size: 12px; color: #666;">
+                        物業: ${record.price}萬 | 首期: ${record.downPayment}萬 | 息率: ${record.rate}% | 年期: ${record.years}年
+                    </div>
+                `;
+                recordsList.appendChild(recordDiv);
+            });
+        }
+        
+        modal.style.display = 'flex';
+    }
+    
+    function closeRecordsModal() {
+        document.getElementById('records-modal').style.display = 'none';
+    }
+    
+    function loadRecord(record) {
+        document.getElementById('price').value = record.price;
+        document.getElementById('downPayment').value = record.downPayment;
+        document.getElementById('rate').value = record.rate;
+        document.getElementById('years').value = record.years;
+        document.getElementById('income').value = record.income;
+        document.getElementById('stressRate').value = record.stressRate || '0';
+        document.getElementById('initialRent').value = record.initialRent || '';
+        document.getElementById('monthlyManagementFee').value = record.monthlyManagementFee || '';
+        document.getElementById('quarterlyRates').value = record.quarterlyRates || '';
+        
+        closeRecordsModal();
+        
+        // 自動計算
+        calculateMortgage();
     }
 </script>
 
